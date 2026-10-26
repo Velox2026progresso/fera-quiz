@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fera Motors | Polo Track 2024</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+:root{
+--bg:#0d0d0f; --panel:#18181c; --line:#2c2c33; --fg:#f2f2f4; --muted:#9a9aa3;
+--red:#e21b23; --red-dk:#a50f15; --wpp:#25d366; --wpp-dk:#128c4a;
+--display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+--body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;margin:0}
+.wrap{max-width:480px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 40px}
+.brand{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.logo{font-family:var(--display);font-style:italic;font-weight:800;font-size:24px}
+.logo b{color:var(--red)}
+.city{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+.hero{border-radius:14px;overflow:hidden;border:1px solid var(--line);max-width:100%;background:#000}
+.hero img{width:100%;display:block}
+.mini{display:flex;gap:12px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:8px}
+.mini img{width:64px;height:64px;object-fit:cover;object-position:center 62%;border-radius:8px;flex:none}
+.mini div{min-width:0}
+.mini strong{display:block;font-family:var(--display);font-style:italic;font-size:19px;text-transform:uppercase;line-height:1.1}
+.mini span{color:var(--muted);font-size:14px}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:18px 0 6px}
+.bar i{display:block;height:100%;background:var(--red);width:0;transition:width .3s}
+.step-n{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+h2{font-family:var(--display);font-style:italic;font-weight:800;font-size:30px;line-height:1.05;margin:8px 0 18px;text-transform:uppercase;text-wrap:balance}
+.lead{color:var(--muted);margin:16px 0 4px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{all:unset;box-sizing:border-box;display:block;width:100%;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:16px 18px;font-size:17px;font-weight:600;cursor:pointer}
+.opt:hover{border-color:var(--red)}
+.opt:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.opt.on{border-color:var(--red);background:var(--red-dk)}
+input[type=text]{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:12px;padding:16px;font:inherit;font-size:17px}
+input[type=text]:focus{outline:2px solid var(--red);border-color:transparent}
+.btn{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;text-align:center;background:var(--red);color:#fff;font-weight:700;font-size:18px;border-radius:12px;padding:16px;margin-top:14px;cursor:pointer}
+.btn:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+.btn[aria-disabled=true]{opacity:.4;pointer-events:none}
+.wpp{background:var(--wpp);color:#06210f;text-decoration:none;box-shadow:0 6px 0 var(--wpp-dk)}
+.wpp svg{width:24px;height:24px}
+.back{all:unset;color:var(--muted);font-size:14px;cursor:pointer;margin-top:18px;display:inline-block}
+.back:focus-visible{outline:2px solid var(--fg)}
+.resumo{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;white-space:pre-wrap;font-size:15px}
+.note{font-size:13px;color:var(--muted);text-align:center;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="brand"><div class="logo"><b>FERA</b> MOTORS</div><div class="city">Bauru · SP</div></div>
+<div id="top"></div>
+<div id="prog" hidden><div class="bar"><i id="barI"></i></div><div class="step-n" id="stepN"></div></div>
+<div id="screen"></div>
+</div>
+<script>
+const CARRO = {"nome": "VW Polo Track 1.0", "ano": "2024", "preco": "R$ 73.990", "whats": "5514991824518", "img": "/1793034652971_image.png"};
+const $=id=>document.getElementById(id);
+const r={};               // respostas
+let hist=[];              // passos já vistos (pra voltar)
+const PASSOS={
+inicio:{tipo:"inicio"},
+nome:{tipo:"texto", q:"Qual é o seu nome?", ph:"Ex.: João", prox:()=> "pag"},
+pag:{tipo:"opcao", q:"Como pretende pagar?", ops:["À vista","Financiado","Ainda não sei"], prox:v=> v==="Financiado"?"entrada":"troca"},
+entrada:{tipo:"opcao", q:"Quanto você tem de entrada?", ops:["Sem entrada","Até R$ 10 mil","De R$ 10 a 20 mil","Mais de R$ 20 mil"], prox:()=> "troca"},
+troca:{tipo:"opcao", q:"Tem carro pra dar na troca?", ops:["Sim","Não"], prox:v=> v==="Sim"?"trocaQual":"quando"},
+trocaQual:{tipo:"texto", q:"Qual carro e ano?", ph:"Ex.: Gol 2012", prox:()=> "quando"},
+quando:{tipo:"opcao", q:"Quando pensa em comprar?", ops:["Essa semana","Esse mês","Só pesquisando"], prox:()=> "fim"},
+fim:{tipo:"fim"}
+};
+const TOTAL=5;
+function mensagem(){
+const l=[`Olá! Me chamo ${r.nome}, vi o anúncio do *${CARRO.nome}* (${CARRO.preco}) e tenho interesse.`,""];
+l.push(`• Pagamento: ${r.pag}${r.pag==="Financiado"&&r.entrada?` (entrada: ${r.entrada.toLowerCase()})`:""}`);
+l.push(r.troca==="Sim"?`• Troca: sim, ${r.trocaQual}`:"• Troca: não tenho");
+l.push(`• Quero comprar: ${r.quando.toLowerCase()}`);
+return l.join("\n");
+}
+function topo(grande){
+$("top").innerHTML = grande
+? `<div class="hero"><img src="${CARRO.img}" alt="${CARRO.nome}"></div>`
+: `<div class="mini"><img src="${CARRO.img}" alt=""><div><strong>${CARRO.nome}</strong><span>${CARRO.preco} · ${CARRO.ano}</span></div></div>`;
+}
+function ir(id,push=true){
+if(push && hist[hist.length-1]!==id) hist.push(id);
+const p=PASSOS[id], s=$("screen");
+const n=["nome","pag","entrada","troca","trocaQual","quando"].indexOf(id);
+const ordem={nome:1,pag:2,entrada:3,troca:3,trocaQual:4,quando:5};
+$("prog").hidden = !(id in ordem);
+if(id in ordem){ $("barI").style.width=(ordem[id]/TOTAL*100)+"%"; $("stepN").textContent=`Pergunta ${ordem[id]} de ${TOTAL}`; }
+topo(id==="inicio");
+const voltar = hist.length>1 ? `<button class="back" id="bk">← Voltar</button>` : "";
+if(p.tipo==="inicio"){
+s.innerHTML=`<p class="lead">Responde 5 perguntas rápidas e a gente já te passa pro WhatsApp do vendedor com a sua proposta pronta.</p>
+<button class="btn" id="go">Quero esse carro</button>`;
+$("go").onclick=()=>ir("nome");
+}
+if(p.tipo==="texto"){
+s.innerHTML=`<h2>${p.q}</h2><input type="text" id="campo-${id}" placeholder="${p.ph}" value="${(r[id]||"").replace(/"/g,"&quot;")}" autocomplete="${id==="nome"?"given-name":"off"}">
+<button class="btn" id="ok" aria-disabled="true">Continuar</button>${voltar}`;
+const c=$("campo-"+id), ok=$("ok");
+const chk=()=>ok.setAttribute("aria-disabled", c.value.trim().length<2);
+c.oninput=chk; chk(); c.focus();
+const seguir=()=>{ if(c.value.trim().length<2) return; r[id]=c.value.trim(); ir(p.prox(r[id])); };
+ok.onclick=seguir; c.onkeydown=e=>{ if(e.key==="Enter") seguir(); };
+}
+if(p.tipo==="opcao"){
+s.innerHTML=`<h2>${p.q}</h2><div class="opts">${p.ops.map(o=>`<button class="opt${r[id]===o?" on":""}">${o}</button>`).join("")}</div>${voltar}`;
+s.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+r[id]=b.textContent; b.classList.add("on");
+setTimeout(()=>ir(p.prox(r[id])),160);
+});
+}
+if(p.tipo==="fim"){
+const url=`https://wa.me/${CARRO.whats}?text=${encodeURIComponent(mensagem())}`;
+s.innerHTML=`<h2>Pronto, ${r.nome.split(" ")[0]}!</h2>
+<p class="lead" style="margin-top:0">Essa é a mensagem que vai pro vendedor:</p>
+<div class="resumo">${mensagem().replace(/</g,"&lt;").replace(/\*/g,"")}</div>
+<a class="btn wpp" href="${url}" target="_blank" rel="noopener">
+<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3a.4.4 0 0 0 0-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 2.9 2.9 0 0 0-.9 2.2 5.1 5.1 0 0 0 1.1 2.7 11.6 11.6 0 0 0 4.4 3.9c1.6.7 2.3.8 3.1.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.6-.3Z"/></svg>
+Enviar no WhatsApp</a>
+<p class="note">Abre o WhatsApp com a mensagem pronta. É só apertar enviar.</p>${voltar}`;
+}
+const bk=$("bk"); if(bk) bk.onclick=()=>{ hist.pop(); ir(hist[hist.length-1],false); };
+window.scrollTo(0,0);
+}
+ir("nome");
+</script>
+</body>
+</html>
